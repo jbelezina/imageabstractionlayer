@@ -1,0 +1,16 @@
+{
+  "name": "imageabs",
+  "version": "0.0.1",
+  "description": "Image abstraction layer project for FreeCodeCamp backend dev challenge",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Jan Belezina",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^0.15.2",
+    "body-parser": "^1.15.2",
+    "express": "^4.14.0"
+  }
+}
