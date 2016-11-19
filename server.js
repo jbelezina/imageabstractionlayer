@@ -10,7 +10,8 @@ let express = require ('express'),
     searchqueries = [],
     app = express();
 
-mongoose.connect(secrets.jansDbUri);
+app.set('view engine', 'ejs');
+mongoose.connect(secrets.jansDbUri || process.env.JANSDBURI);
 app.use(bodyparser.urlencoded({ extended: false }));
 
 // MONGO SETUP =================================================================
@@ -20,7 +21,8 @@ let db = mongoose.connection;
 
 let querySchema = mongoose.Schema({
     term: String,
-    when: Date
+    when: String,
+    date: Date
 });
 
 let queryModel = mongoose.model('queryModel', querySchema);
@@ -38,7 +40,8 @@ app.get('/:searchquery', (req,res) => {
     
     let searchquery = req.params.searchquery,
         queryUrlEncoded = encodeURI(searchquery),
-        timestamp = Date().toString(),
+        timestamp = Date(),
+        when = timestamp.toString(),
         showPage = req.query.offset,
         startIndex = 1;
     
@@ -55,7 +58,8 @@ passed in (e.g. if offset is 2, the first result should have the index of 21) */
         
         var newQuery = new queryModel({ 
             'term' : searchquery,
-            'when' : timestamp
+            'when' : when,
+            'date' : timestamp
         });
         
         newQuery.save(function (err, newQuery) {
@@ -67,8 +71,8 @@ passed in (e.g. if offset is 2, the first result should have the index of 21) */
     
 // get the results
 
-    axios.get('https://www.googleapis.com/customsearch/v1?key=' + secrets.jansKey + '&start='
-    + startIndex + '&cx=' + secrets.jansCx + '&q=' 
+    axios.get('https://www.googleapis.com/customsearch/v1?key=' + secrets.jansKey || process.env.JANSKEY + '&start='
+    + startIndex + '&cx=' + secrets.jansCx || process.env.JANSCX + '&q=' 
     + queryUrlEncoded + '&fileType=jpg&fields=items')
         .then(function (response) {
             
@@ -77,12 +81,17 @@ passed in (e.g. if offset is 2, the first result should have the index of 21) */
             let jsonItems = JSON.parse(JSON.stringify(response.data.items));
             let arrayOfresults = [];
             if (jsonItems.length < 10) {
-                arrayOfresults.unshift({'Next page available' : 'false'})
+                arrayOfresults.unshift({'Next page 0available' : 'false'})
             } 
             
             for (let i = 0; i < jsonItems.length; i++) {
                 
-                let thumbnailUrl = jsonItems[i].pagemap['cse_thumbnail'][0].src;
+                let thumbnailUrl;
+                if(jsonItems[i].pagemap['cse_thumbnail']) {
+                    thumbnailUrl = jsonItems[i].pagemap['cse_thumbnail'][0].src;
+                } else {
+                    thumbnailUrl = "no thumbnail available";
+                }
                 let formattedResult = {}
                 formattedResult.url = jsonItems[i].link;
                 formattedResult.snippet = jsonItems[i].snippet;
@@ -95,6 +104,7 @@ passed in (e.g. if offset is 2, the first result should have the index of 21) */
             res.json(JSON.parse(JSON.stringify(arrayOfresults)));
         })
         .catch(function (error) {
+            console.log(error)
             res.json({
                 error: "sorry, no results found"    
             });
@@ -114,7 +124,7 @@ app.get('/api/latest/imagesearch/', (req,res) => {
 
         let results = [];
         
-        for (let i = 0 ; i < queries.length ; i++) {
+        for (let i = queries.length - 1 ; i > -1  ; i--) {
             
             let eachEntry = {};
             eachEntry.term = queries[i].term;
