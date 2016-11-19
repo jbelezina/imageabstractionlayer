@@ -4,9 +4,8 @@ let express = require ('express'),
     bodyparser = require('body-parser'),
     axios = require('axios'),
     mongoose = require('mongoose'),
-// used in dev env only     secrets = require('./secrets'),
     homeControler = require('./controlers/home.controler.js'),
-    portNo = 8080,
+    portNo = process.env.PORT || 8080,
     searchqueries = [],
     app = express();
 
@@ -145,4 +144,4 @@ app.get('/api/latest/imagesearch/', (req,res) => {
 
 app.listen(portNo, function(){
     console.log('server listeninig on port ' + portNo);
-} )
+})
