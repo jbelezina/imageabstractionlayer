@@ -4,14 +4,14 @@ let express = require ('express'),
     bodyparser = require('body-parser'),
     axios = require('axios'),
     mongoose = require('mongoose'),
-    secrets = require('./secrets'),
+// used in dev env only     secrets = require('./secrets'),
     homeControler = require('./controlers/home.controler.js'),
     portNo = 8080,
     searchqueries = [],
     app = express();
 
 app.set('view engine', 'ejs');
-mongoose.connect(secrets.jansDbUri || process.env.JANSDBURI);
+mongoose.connect(process.env.JANSDBURI);
 app.use(bodyparser.urlencoded({ extended: false }));
 
 // MONGO SETUP =================================================================
@@ -71,8 +71,8 @@ passed in (e.g. if offset is 2, the first result should have the index of 21) */
     
 // get the results
 
-    axios.get('https://www.googleapis.com/customsearch/v1?key=' + secrets.jansKey || process.env.JANSKEY + '&start='
-    + startIndex + '&cx=' + secrets.jansCx || process.env.JANSCX + '&q=' 
+    axios.get('https://www.googleapis.com/customsearch/v1?key=' + process.env.JANSKEY + '&start='
+    + startIndex + '&cx=' + process.env.JANSCX + '&q=' 
     + queryUrlEncoded + '&fileType=jpg&fields=items')
         .then(function (response) {
             
